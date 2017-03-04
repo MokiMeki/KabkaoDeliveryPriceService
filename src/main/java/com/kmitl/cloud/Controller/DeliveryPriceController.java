@@ -7,15 +7,22 @@ import com.kmitl.cloud.Model.DeliveryPrice;
 import com.kmitl.cloud.Service.DistanceService;
 import com.kmitl.cloud.Service.GeocodingService;
 import com.kmitl.cloud.Service.PriceCalculationService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import org.springframework.web.bind.annotation.*;
+
+import static com.kmitl.cloud.Constant.ADDRESS_NOT_FOUND_MSG;
+import static com.kmitl.cloud.Constant.ROUTE_NOT_FOUND_MSG;
 
 /**
  * Created by snow_ on 02-Mar-17.
  */
+@Api(description = "Api of Kabkao delivery price")
+@CrossOrigin
 @RestController
+@RequestMapping(value = "/api")
 public class DeliveryPriceController {
 
     GeocodingService geocodingService;
@@ -28,38 +35,31 @@ public class DeliveryPriceController {
         this.priceCalculationService = priceCalculationService;
     }
 
-    @GetMapping
-    String deliveryPriceGet(){
-        String welcomeMsg = "Welcome to KabkaoDeliveryPriceService!! \n"+
-                "/storeCoordinate [Get]> to find out where we are \n"+
-                "/deliveryPrice [Get]> to get delivery price example format\n"+
-                "/deliveryPrice [Post]> to get delivery price ";
-        return welcomeMsg;
-    }
-
+    @ApiOperation(value = "Kabkao headquarter coordinate")
     @GetMapping(value = "/storeCoordinate")
-    Coordinate storeCoordinate(){
+    public Coordinate storeCoordinate(){
         return new Coordinate(Constant.STORE_LAT,Constant.STORE_LONG);
     }
 
+    @ApiOperation(value = "Get coordinate by address")
+    @ApiResponses(value = @ApiResponse(code = 500,message = ADDRESS_NOT_FOUND_MSG))
     @PostMapping(value="/geocode")
-    Geometry geometryFromAddress(@RequestBody String address){
-        return geocodingService.getGeocoding(address);
+    public Coordinate geometryFromAddress(@RequestBody String address){
+        Geometry geometry = geocodingService.getGeocoding(address);
+        return new Coordinate(geometry.location.lat,geometry.location.lng);
     }
 
+    @ApiResponses(@ApiResponse(code = 500,message = ROUTE_NOT_FOUND_MSG+" or "+ADDRESS_NOT_FOUND_MSG))
+    @ApiOperation(value = "Distance to Kabkao headquarter in friendly text!!")
     @PostMapping(value="/distanceFromStore")
-    String distanceFromAddress(@RequestBody String address){
+    public String distanceFromAddress(@RequestBody String address){
         return distanceService.getDistanceReadable(address);
     }
 
-
-    @GetMapping(value="/deliveryPrice")
-    Coordinate coordinateFormat(){
-        return new Coordinate();
-    }
-
+    @ApiOperation(value = "Calculate delivery price based on coordinate")
+    @ApiResponses(value = @ApiResponse(code = 500,message = ROUTE_NOT_FOUND_MSG))
     @PostMapping(value="/deliveryPrice")
-    DeliveryPrice priceFromLatLong(@RequestBody Coordinate coordinate){
+    public DeliveryPrice priceFromLatLong(@RequestBody Coordinate coordinate){
         DeliveryPrice deliveryPrice = priceCalculationService.deliveryPriceTo(coordinate);
 
         return deliveryPrice;

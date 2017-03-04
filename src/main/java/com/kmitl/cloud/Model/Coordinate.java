@@ -3,6 +3,7 @@ package com.kmitl.cloud.Model;
 /**
  * Created by snow_ on 04-Mar-17.
  */
+
 public class Coordinate {
     private double Latitude;
     private double Longitude;

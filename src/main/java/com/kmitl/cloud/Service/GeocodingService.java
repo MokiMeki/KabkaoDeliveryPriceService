@@ -5,6 +5,7 @@ import com.google.maps.GeocodingApi;
 import com.google.maps.model.GeocodingResult;
 import com.google.maps.model.Geometry;
 import com.kmitl.cloud.Credential;
+import com.kmitl.cloud.Exception.AddressNotFound;
 import org.springframework.stereotype.Service;
 
 /**
@@ -18,9 +19,11 @@ public class GeocodingService {
     public Geometry getGeocoding(String address){
         try {
             GeocodingResult[] results = GeocodingApi.geocode(context,address).await();
-            return results[0].geometry;
+            if(results.length!=0){
+                return results[0].geometry;
+            }
         }catch(Exception e){}
 
-        return null;
+        throw new AddressNotFound();
     }
 }
